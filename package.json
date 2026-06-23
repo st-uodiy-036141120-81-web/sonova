@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy:cf": "npm run build && wrangler deploy",
+    "deploy:upload": "wrangler deploy -c wrangler.upload.jsonc",
     "deploy:pages": "npm run build && wrangler pages deploy dist --project-name sonova",
     "cap:init": "npx cap init Sonova app.sonova.music --web-dir dist",
     "cap:sync": "npm run build && npx cap sync"
