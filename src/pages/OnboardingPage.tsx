@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '../components/PageLayout';
+import AppLoadingScreen from '../components/AppLoadingScreen';
 import { useAuth } from '../context/AuthContext';
 import { createOAuthProfile } from '../lib/apiExtended';
 import { isUsernameAvailable, POPULAR_TAGS } from '../lib/api';
@@ -21,7 +22,7 @@ export default function OnboardingPage() {
 
   if (!loading && profile) {
     navigate('/');
-    return null;
+    return <AppLoadingScreen />;
   }
 
   if (!loading && !user) {

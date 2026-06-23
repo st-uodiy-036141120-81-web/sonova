@@ -89,6 +89,12 @@ export default function BoomerangVideoBg() {
       } else {
         cancelAnimationFrame(rafCaptureId);
       }
+      if (framesRef.current.length === 0) {
+        video.loop = true;
+        video.currentTime = 0;
+        video.play().catch(() => {});
+        return;
+      }
       setVideoEnded(true);
     };
 
@@ -143,7 +149,10 @@ export default function BoomerangVideoBg() {
   }, [videoEnded]);
 
   return (
-    <div className="absolute inset-0 z-0 scale-[1.08] origin-center overflow-hidden">
+    <div
+      className="absolute inset-0 z-0 scale-[1.08] origin-center overflow-hidden"
+      style={{ background: 'linear-gradient(145deg, #1a1a2e 0%, #16213e 45%, #0a0a0f 100%)' }}
+    >
       <video
         ref={videoRef}
         src={VIDEO_SRC}

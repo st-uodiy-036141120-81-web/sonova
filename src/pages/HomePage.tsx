@@ -36,7 +36,7 @@ export default function HomePage() {
         Sonova · {t('home.badge')}
       </div>
 
-      <h1 className="animate-fade-up delay-2 max-w-3xl text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-white">
+      <h1 className="animate-fade-up delay-2 max-w-3xl text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-[var(--text-primary)]">
         {taglineParts[0]}.
         {taglineParts[1] && (
           <>
@@ -46,7 +46,7 @@ export default function HomePage() {
         )}
       </h1>
 
-      <p className="animate-fade-up delay-3 mt-5 sm:mt-6 max-w-md text-sm sm:text-base md:text-lg leading-relaxed text-white/90">
+      <p className="animate-fade-up delay-3 mt-5 sm:mt-6 max-w-md text-sm sm:text-base md:text-lg leading-relaxed text-[var(--text-muted)]">
         {t('description')}
       </p>
 

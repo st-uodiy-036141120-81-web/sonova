@@ -17,6 +17,7 @@ interface AuthContextValue {
   profile: Profile | null;
   session: Session | null;
   loading: boolean;
+  profileLoading: boolean;
   configured: boolean;
   emailVerified: boolean;
   needsOnboarding: boolean;
@@ -38,8 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const loadProfile = useCallback(async (userId: string) => {
+    setProfileLoading(true);
     try {
       const p = await fetchProfile(userId);
       setProfile(p);
@@ -55,6 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch {
       setProfile(null);
+    } finally {
+      setProfileLoading(false);
     }
   }, []);
 
@@ -158,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, loadProfile]);
 
   const emailVerified = Boolean(user?.email_confirmed_at ?? user?.confirmed_at);
-  const needsOnboarding = Boolean(user && !profile);
+  const needsOnboarding = Boolean(user && !profile && !profileLoading);
 
   const value = useMemo(
     () => ({
@@ -166,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       session,
       loading,
+      profileLoading,
       configured: isSupabaseConfigured,
       emailVerified,
       needsOnboarding,
@@ -184,6 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       session,
       loading,
+      profileLoading,
       emailVerified,
       needsOnboarding,
       signUp,

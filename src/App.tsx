@@ -36,12 +36,13 @@ import ClipAnalyticsPage from './pages/ClipAnalyticsPage';
 import SavedPage from './pages/SavedPage';
 import LegalPage from './pages/LegalPage';
 import CookieConsent from './components/CookieConsent';
+import AppLoadingScreen from './components/AppLoadingScreen';
 
 function EmailVerificationGuard({ children }: { children: ReactNode }) {
-  const { user, emailVerified, loading } = useAuth();
+  const { user, emailVerified, loading, profileLoading } = useAuth();
   const { pathname } = useLocation();
   const publicPaths = ['/login', '/register', '/verify-email', '/onboarding'];
-  if (loading) return null;
+  if (loading || profileLoading) return <AppLoadingScreen />;
   if (user && !emailVerified && !publicPaths.includes(pathname)) {
     return <Navigate to="/verify-email" replace />;
   }
@@ -49,8 +50,8 @@ function EmailVerificationGuard({ children }: { children: ReactNode }) {
 }
 
 function OnboardingGuard({ children }: { children: ReactNode }) {
-  const { user, loading, needsOnboarding } = useAuth();
-  if (loading) return null;
+  const { user, loading, needsOnboarding, profileLoading } = useAuth();
+  if (loading || profileLoading) return <AppLoadingScreen />;
   if (user && needsOnboarding) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 }
