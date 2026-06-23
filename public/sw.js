@@ -1,4 +1,4 @@
-const SHELL = 'sonova-v5';
+const SHELL = 'sonova-v6';
 const AUDIO = 'sonova-audio-v1';
 const ASSETS = ['/manifest.webmanifest', '/favicon.svg'];
 

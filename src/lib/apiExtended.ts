@@ -7,7 +7,7 @@ import type {
   Profile,
   Song,
 } from './types';
-import { requireClient, isFollowing } from './api';
+import { requireClient, PROFILE_SELECT, isFollowing } from './api';
 import { createNotification, NotificationKeys } from './notificationI18n';
 import { fetchUserSettings } from './userSettingsApi';
 
@@ -45,7 +45,7 @@ export async function createOAuthProfile(
 
   const { data: existing } = await client
     .from('profiles')
-    .select('*')
+    .select(PROFILE_SELECT)
     .eq('id', userId)
     .maybeSingle();
 
@@ -64,7 +64,7 @@ export async function createOAuthProfile(
       .from('profiles')
       .update({ username: normalizedUsername, display_name: normalizedDisplayName })
       .eq('id', userId)
-      .select()
+      .select(PROFILE_SELECT)
       .single();
     if (error) throw error;
     profile = data as Profile;
@@ -76,7 +76,7 @@ export async function createOAuthProfile(
         username: normalizedUsername,
         display_name: normalizedDisplayName,
       })
-      .select()
+      .select(PROFILE_SELECT)
       .single();
     if (error) throw error;
     profile = data as Profile;

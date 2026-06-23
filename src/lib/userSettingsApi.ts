@@ -1,4 +1,4 @@
-import { requireClient } from './api';
+import { requireClient, PROFILE_SELECT } from './api';
 import {
   mergeUserSettings,
   type UserSettings,
@@ -27,7 +27,7 @@ export async function saveUserSettings(userId: string, settings: UserSettings): 
 
 export async function exportUserData(userId: string): Promise<Record<string, unknown>> {
   const client = requireClient();
-  const profileRes = await client.from('profiles').select('*').eq('id', userId).single();
+  const profileRes = await client.from('profiles').select(PROFILE_SELECT).eq('id', userId).single();
   const studioRes = await client.from('studios').select('*').eq('owner_id', userId).maybeSingle();
   let songs: unknown[] = [];
   if (studioRes.data?.id) {

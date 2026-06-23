@@ -17,6 +17,10 @@ function requireClient() {
 
 export { requireClient };
 
+/** Safe columns — excludes totp_secret, daily_upload_count, upload_count_date */
+export const PROFILE_SELECT =
+  'id, username, display_name, bio, avatar_url, created_at, taste_tags, trust_score, referral_code, verified, is_admin, totp_enabled, settings';
+
 function normalizeSong(row: Record<string, unknown>): Song {
   return {
     ...row,
@@ -57,7 +61,7 @@ function filterBlocked<T extends { id?: string; owner_id?: string; user_id?: str
 import { validateUsername } from './validators';
 import { createNotification, NotificationKeys } from './notificationI18n';
 export async function fetchProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await requireClient().from('profiles').select('*').eq('id', userId).maybeSingle();
+  const { data, error } = await requireClient().from('profiles').select(PROFILE_SELECT).eq('id', userId).maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -65,7 +69,7 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
 export async function fetchProfileByUsername(username: string): Promise<Profile | null> {
   const { data, error } = await requireClient()
     .from('profiles')
-    .select('*')
+    .select(PROFILE_SELECT)
     .eq('username', username)
     .maybeSingle();
   if (error) throw error;
@@ -80,7 +84,7 @@ export async function updateProfile(
     .from('profiles')
     .update(updates)
     .eq('id', userId)
-    .select()
+    .select(PROFILE_SELECT)
     .single();
   if (error) throw error;
   return data as Profile;
@@ -100,7 +104,7 @@ export async function updateUsername(userId: string, username: string): Promise<
 export async function searchProfiles(query: string, viewerId?: string): Promise<Profile[]> {
   const { data, error } = await requireClient()
     .from('profiles')
-    .select('*')
+    .select(PROFILE_SELECT)
     .ilike('username', `%${query}%`)
     .limit(20);
   if (error) throw error;

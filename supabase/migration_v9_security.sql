@@ -141,5 +141,5 @@ create policy "transfers insert owner" on public.song_transfers for insert with 
   )
 );
 
--- ── Hide sensitive profile columns from API clients ──
-revoke select (totp_secret, daily_upload_count, upload_count_date) on public.profiles from anon, authenticated;
+-- Sensitive columns hidden via app select list (PROFILE_SELECT), not column REVOKE.
+-- Column REVOKE breaks PostgREST select('*') with "permission denied for table profiles".
