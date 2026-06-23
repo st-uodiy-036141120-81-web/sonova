@@ -4,10 +4,9 @@ import type {
   Conversation,
   DashboardStats,
   DirectMessage,
-  Profile,
   Song,
 } from './types';
-import { requireClient, PROFILE_SELECT, isFollowing } from './api';
+import { requireClient, isFollowing } from './api';
 import { createNotification, NotificationKeys } from './notificationI18n';
 import { fetchUserSettings } from './userSettingsApi';
 
@@ -33,72 +32,9 @@ export async function checkDuplicateFingerprint(fingerprint: string): Promise<So
   return null;
 }
 
-export async function createOAuthProfile(
-  userId: string,
-  username: string,
-  displayName: string
-): Promise<Profile> {
-  const client = requireClient();
-  const normalizedUsername = username.trim();
-  const normalizedDisplayName = displayName.trim() || normalizedUsername;
-  const studioName = `${normalizedDisplayName}'s Studio`;
+import { createOAuthProfile } from './createOAuthProfile';
 
-  const { data: existing } = await client
-    .from('profiles')
-    .select(PROFILE_SELECT)
-    .eq('id', userId)
-    .maybeSingle();
-
-  const { data: taken } = await client
-    .from('profiles')
-    .select('id')
-    .eq('username', normalizedUsername)
-    .neq('id', userId)
-    .maybeSingle();
-  if (taken) throw new Error('USERNAME_TAKEN');
-
-  let profile: Profile;
-
-  if (existing) {
-    const { data, error } = await client
-      .from('profiles')
-      .update({ username: normalizedUsername, display_name: normalizedDisplayName })
-      .eq('id', userId)
-      .select(PROFILE_SELECT)
-      .single();
-    if (error) throw error;
-    profile = data as Profile;
-  } else {
-    const { data, error } = await client
-      .from('profiles')
-      .insert({
-        id: userId,
-        username: normalizedUsername,
-        display_name: normalizedDisplayName,
-      })
-      .select(PROFILE_SELECT)
-      .single();
-    if (error) throw error;
-    profile = data as Profile;
-  }
-
-  const { data: studio } = await client
-    .from('studios')
-    .select('id')
-    .eq('owner_id', userId)
-    .maybeSingle();
-
-  if (!studio) {
-    const { error: studioError } = await client.from('studios').insert({
-      owner_id: userId,
-      name: studioName,
-      description: '',
-    });
-    if (studioError) throw studioError;
-  }
-
-  return profile;
-}
+export { createOAuthProfile };
 
 export async function sendMessage(senderId: string, receiverId: string, content: string) {
   const receiverSettings = await fetchUserSettings(receiverId);
