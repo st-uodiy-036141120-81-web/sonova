@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { User, MessageCircle } from 'lucide-react';
+import { User, MessageCircle, BookOpen, Film, Music, Radio } from 'lucide-react';
 import PageLayout from '../components/PageLayout';
 import SongCard from '../components/SongCard';
 import UploadSongForm from '../components/UploadSongForm';
@@ -10,6 +10,7 @@ import FollowBlockButtons from '../components/FollowBlockButtons';
 import PlaylistSection from '../components/PlaylistSection';
 import TransferRequests from '../components/TransferRequests';
 import StudioStoriesBar from '../components/StudioStoriesBar';
+import StudioDraftsPanel from '../components/StudioDraftsPanel';
 import TipJar from '../components/TipJar';
 import VerifiedBadge from '../components/VerifiedBadge';
 import ShareButton from '../components/ShareButton';
@@ -25,7 +26,8 @@ import {
   updateStudio,
   isBlocked,
 } from '../lib/api';
-import type { Song, SongTransfer, Studio, StudioComment } from '../lib/types';
+import type { Song, SongTransfer, Studio, StudioComment, LiveSession } from '../lib/types';
+import { fetchActiveLive } from '../lib/featuresApi';
 import type { PlayerTrack } from '../lib/types';
 
 export default function StudioPage() {
@@ -44,6 +46,7 @@ export default function StudioPage() {
   const [studioDesc, setStudioDesc] = useState('');
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [activeLive, setActiveLive] = useState<LiveSession | null>(null);
 
   const isOwner = user?.id === studio?.owner_id;
   const owner = studio?.owner;
@@ -69,16 +72,18 @@ export default function StudioPage() {
       setStudio(s);
       setStudioName(s.name);
       setStudioDesc(s.description ?? '');
-      const [songList, commentList, pending, followCounts] = await Promise.all([
+      const [songList, commentList, pending, followCounts, liveSession] = await Promise.all([
         fetchStudioSongs(s.id, user?.id, s.owner_id),
         fetchStudioComments(s.id, user?.id),
         isOwner || s.owner_id === user?.id ? fetchPendingTransfers(s.id) : Promise.resolve([]),
         fetchFollowCounts(s.owner_id),
+        fetchActiveLive(s.id),
       ]);
       setSongs(songList);
       setComments(commentList);
       setTransfers(pending);
       setCounts(followCounts);
+      setActiveLive(liveSession);
     } catch {
       setNotFound(true);
     } finally {
@@ -165,6 +170,23 @@ export default function StudioPage() {
 
         <StudioStoriesBar studioId={studio.id} />
 
+        {isOwner && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link to="/create/story" className="flex items-center gap-1.5 rounded-xl bg-purple-700/80 px-3 py-1.5 text-xs text-white hover:scale-105">
+              <BookOpen size={12} /> {t('create.storyTitle')}
+            </Link>
+            <Link to="/create/reel" className="flex items-center gap-1.5 rounded-xl bg-pink-700/80 px-3 py-1.5 text-xs text-white hover:scale-105">
+              <Film size={12} /> {t('create.reelTitle')}
+            </Link>
+            <Link to="/create/song" className="flex items-center gap-1.5 rounded-xl bg-blue-700/80 px-3 py-1.5 text-xs text-white hover:scale-105">
+              <Music size={12} /> {t('create.songTitle')}
+            </Link>
+            <Link to="/create/live" className="flex items-center gap-1.5 rounded-xl bg-red-700/80 px-3 py-1.5 text-xs text-white hover:scale-105">
+              <Radio size={12} /> {t('create.liveTitle')}
+            </Link>
+          </div>
+        )}
+
         {!isOwner && owner && (
           <div className="mt-4 flex flex-wrap gap-3">
             <TipJar receiverId={owner.id} username={username ?? ''} />
@@ -189,9 +211,11 @@ export default function StudioPage() {
           )}
           <Link
             to={`/live/${username}`}
-            className="liquid-glass flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-red-400 hover:scale-105"
+            className={`liquid-glass flex items-center gap-2 rounded-xl px-4 py-2 text-sm hover:scale-105 ${
+              activeLive?.is_active ? 'text-red-400 ring-2 ring-red-500/50 animate-pulse' : 'text-[var(--text-muted)]'
+            }`}
           >
-            ● LIVE
+            ● {activeLive?.is_active ? 'LIVE' : isOwner ? t('live.start') : t('live.offline')}
           </Link>
         </div>
       </div>
@@ -201,6 +225,7 @@ export default function StudioPage() {
       {isOwner && (
         <div className="animate-fade-up delay-1 mt-6">
           <UploadSongForm studioId={studio.id} onUploaded={load} />
+          <StudioDraftsPanel studioId={studio.id} onUpdated={load} />
         </div>
       )}
 

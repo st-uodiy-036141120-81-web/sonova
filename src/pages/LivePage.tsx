@@ -16,9 +16,11 @@ export default function LivePage() {
   const [studio, setStudio] = useState<Studio | null>(null);
   const [live, setLive] = useState<LiveSession | null>(null);
   const [title, setTitle] = useState('');
+  const [useVideo, setUseVideo] = useState(false);
   const [connected, setConnected] = useState(false);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const load = async () => {
     if (!username) return;
@@ -55,19 +57,28 @@ export default function LivePage() {
 
   const isOwner = user?.id === studio?.owner_id;
 
-  const startWebRTC = async () => {
+  const attachStream = (stream: MediaStream) => {
+    if (audioRef.current) audioRef.current.srcObject = stream;
+    if (videoRef.current && useVideo) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(() => {});
+    }
+    setConnected(true);
+  };
+
+  const startWebRTC = async (withVideo: boolean) => {
     const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
     pcRef.current = pc;
     pc.ontrack = (e) => {
-      if (audioRef.current) audioRef.current.srcObject = e.streams[0] ?? null;
-      setConnected(true);
+      if (e.streams[0]) attachStream(e.streams[0]);
     };
     pc.onicecandidate = (e) => {
       if (e.candidate && live && user) sendLiveSignal(live.id, user.id, 'ice', e.candidate.toJSON());
     };
     if (isOwner) {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: withVideo });
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+      attachStream(stream);
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       if (live && user) await sendLiveSignal(live.id, user.id, 'offer', offer);
@@ -78,11 +89,12 @@ export default function LivePage() {
     if (!studio || !user || !title.trim()) return;
     const session = await startLiveSession(studio.id, user.id, title.trim());
     setLive(session);
-    setTimeout(() => startWebRTC(), 500);
+    setTimeout(() => startWebRTC(useVideo), 500);
   };
 
   const handleEnd = async () => {
     pcRef.current?.close();
+    pcRef.current = null;
     if (!live) return;
     await endLiveSession(live.id);
     setLive(null);
@@ -90,7 +102,7 @@ export default function LivePage() {
   };
 
   useEffect(() => {
-    if (live?.is_active && !isOwner) startWebRTC();
+    if (live?.is_active && !isOwner) startWebRTC(false);
   }, [live?.is_active, isOwner]);
 
   return (
@@ -101,6 +113,9 @@ export default function LivePage() {
           <span className="inline-flex items-center gap-2 rounded-full bg-red-600 px-3 py-1 text-xs text-white animate-pulse">● LIVE {connected && '· WebRTC'}</span>
           <p className="mt-4 text-lg text-[var(--text-primary)]">{live.title}</p>
           <p className="text-sm text-[var(--text-muted)]">@{username}</p>
+          {useVideo || !isOwner ? (
+            <video ref={videoRef} autoPlay playsInline muted={isOwner} className="mt-4 aspect-video w-full rounded-xl bg-black object-cover" />
+          ) : null}
           <audio ref={audioRef} autoPlay playsInline className="mt-4 w-full" />
           {isOwner && (
             <button type="button" onClick={handleEnd} className="mt-4 rounded-xl bg-red-600 px-4 py-2 text-sm text-white">{t('live.end')}</button>
@@ -109,12 +124,19 @@ export default function LivePage() {
       ) : isOwner ? (
         <div className="mt-6 space-y-3">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('live.sessionTitle')} className="w-full rounded-xl bg-white/10 px-4 py-3 text-sm text-[var(--text-primary)] outline-none" />
-          <button type="button" onClick={handleStart} className="w-full rounded-xl bg-red-600 py-3 text-sm text-white">{t('live.start')}</button>
+          <label className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+            <input type="checkbox" checked={useVideo} onChange={(e) => setUseVideo(e.target.checked)} />
+            {t('live.enableVideo')}
+          </label>
+          <button type="button" onClick={handleStart} disabled={!title.trim()} className="w-full rounded-xl bg-red-600 py-3 text-sm text-white disabled:opacity-50">{t('live.start')}</button>
         </div>
       ) : (
         <p className="mt-6 text-[var(--text-muted)]">{t('live.offline')}</p>
       )}
-      {username && <Link to={`/studio/${username}`} className="mt-6 block text-sm text-blue-400">{t('common.back')}</Link>}
+      <div className="mt-6 flex flex-wrap gap-4 text-sm">
+        {username && <Link to={`/studio/${username}`} className="text-blue-400">{t('common.back')}</Link>}
+        <Link to="/live" className="text-blue-400">{t('create.browseLive')}</Link>
+      </div>
     </PageLayout>
   );
 }

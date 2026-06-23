@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Menu, X, Search, LogIn, LogOut, User, Disc3, Rss, MessageCircle, BarChart3, Shield, PlaySquare, Upload } from 'lucide-react';
+import { Menu, X, Search, LogIn, LogOut, User, Disc3, Rss, MessageCircle, BarChart3, Shield, PlaySquare, PlusCircle } from 'lucide-react';
 import SonovaLogo from './SonovaLogo';
 import NotificationsBell from './NotificationsBell';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -38,8 +38,8 @@ export default function Header() {
           ))}
           {profile && (
             <>
-              <Link to="/upload" className="flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-sm text-gray-900 hover:scale-105">
-                <Upload size={14} /> {t('nav.upload')}
+              <Link to="/create" className="flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-sm text-gray-900 hover:scale-105">
+                <PlusCircle size={14} /> {t('nav.create')}
               </Link>
               <Link to={`/studio/${profile.username}`} className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]">{t('nav.myStudio')}</Link>
               <Link to="/messages" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]">{t('nav.messages')}</Link>
@@ -113,7 +113,7 @@ export default function Header() {
           ))}
           {profile && (
             <>
-              <Link to="/upload" className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}><Upload size={14} />{t('nav.upload')}</Link>
+              <Link to="/create" className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}><PlusCircle size={14} />{t('nav.create')}</Link>
               <Link to={`/studio/${profile.username}`} className="block rounded-xl px-4 py-3 text-sm" onClick={() => setMenuOpen(false)}>{t('nav.myStudio')}</Link>
               <Link to="/messages" className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm" onClick={() => setMenuOpen(false)}><MessageCircle size={14} />{t('nav.messages')}</Link>
               <Link to="/dashboard" className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm" onClick={() => setMenuOpen(false)}><BarChart3 size={14} />{t('nav.dashboard')}</Link>

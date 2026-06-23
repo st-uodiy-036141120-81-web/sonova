@@ -36,7 +36,13 @@ export default function StudioStoriesBar({ studioId }: StudioStoriesBarProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6" onClick={() => setActive(null)}>
           <div className="max-w-sm rounded-2xl bg-[#121218] p-6 text-white" onClick={(e) => e.stopPropagation()}>
             <p>{active.content}</p>
-            {active.media_url && <img src={active.media_url} alt="" className="mt-3 rounded-xl" />}
+            {active.media_url && (
+              /\.mp4(\?|$)/i.test(active.media_url) ? (
+                <video src={active.media_url} controls autoPlay className="mt-3 max-h-64 w-full rounded-xl" />
+              ) : (
+                <img src={active.media_url} alt="" className="mt-3 rounded-xl" />
+              )
+            )}
             <button type="button" onClick={() => setActive(null)} className="mt-4 text-sm text-white/60">{t('common.close')}</button>
           </div>
         </div>

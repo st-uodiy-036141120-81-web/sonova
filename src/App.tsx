@@ -36,6 +36,11 @@ import ClipAnalyticsPage from './pages/ClipAnalyticsPage';
 import SavedPage from './pages/SavedPage';
 import LegalPage from './pages/LegalPage';
 import UploadPage from './pages/UploadPage';
+import CreatePage from './pages/CreatePage';
+import CreateStoryPage from './pages/CreateStoryPage';
+import CreateReelPage from './pages/CreateReelPage';
+import CreateLivePage from './pages/CreateLivePage';
+import LiveBrowsePage from './pages/LiveBrowsePage';
 import CookieConsent from './components/CookieConsent';
 import AppLoadingScreen from './components/AppLoadingScreen';
 import RequireAuth, { GuestOnly } from './components/RequireAuth';
@@ -89,6 +94,7 @@ export default function App() {
                   <Route path="/focus" element={<FocusPage />} />
                   <Route path="/song/:id" element={<SongPage />} />
                   <Route path="/embed/:id" element={<EmbedPage />} />
+                  <Route path="/live" element={<LiveBrowsePage />} />
                   <Route path="/live/:username" element={<LivePage />} />
                   <Route path="/listen-like/:username" element={<ListenLikePage />} />
                   <Route path="/saved" element={<RequireAuth><SavedPage /></RequireAuth>} />
@@ -110,6 +116,11 @@ export default function App() {
                   <Route path="/room/:id" element={<ListeningRoomPage />} />
                   <Route path="/clip-analytics/:songId" element={<RequireAuth><ClipAnalyticsPage /></RequireAuth>} />
                   <Route path="/upload" element={<RequireAuth><UploadPage /></RequireAuth>} />
+                  <Route path="/create" element={<RequireAuth><CreatePage /></RequireAuth>} />
+                  <Route path="/create/story" element={<RequireAuth><CreateStoryPage /></RequireAuth>} />
+                  <Route path="/create/reel" element={<RequireAuth><CreateReelPage /></RequireAuth>} />
+                  <Route path="/create/song" element={<RequireAuth><UploadPage /></RequireAuth>} />
+                  <Route path="/create/live" element={<RequireAuth><CreateLivePage /></RequireAuth>} />
                   <Route path="/legal/:doc" element={<LegalPage />} />
                   <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
                 </Routes>

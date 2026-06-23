@@ -21,9 +21,10 @@ interface UploadSongFormProps {
   studioId: string;
   onUploaded: () => void;
   variant?: 'simple' | 'full';
+  mode?: 'song' | 'reel';
 }
 
-export default function UploadSongForm({ studioId, onUploaded, variant = 'full' }: UploadSongFormProps) {
+export default function UploadSongForm({ studioId, onUploaded, variant = 'full', mode = 'song' }: UploadSongFormProps) {
   const { user } = useAuth();
   const { settings } = useUserSettings();
   const { t } = useTranslation();
@@ -34,7 +35,9 @@ export default function UploadSongForm({ studioId, onUploaded, variant = 'full' 
   const [waveformPeaks, setWaveformPeaks] = useState<number[] | undefined>();
   const [tags, setTags] = useState<string[]>(settings.defaultTags);
   const [originalSongId, setOriginalSongId] = useState('');
-  const [reelClipEnabled, setReelClipEnabled] = useState(false);
+  const isReelMode = mode === 'reel';
+  const effectiveVariant = isReelMode ? 'simple' : variant;
+  const [reelClipEnabled, setReelClipEnabled] = useState(isReelMode);
   const [clipStart, setClipStart] = useState(0);
   const [clipEnd, setClipEnd] = useState(30);
   const [loopCount, setLoopCount] = useState(0);
@@ -50,8 +53,8 @@ export default function UploadSongForm({ studioId, onUploaded, variant = 'full' 
   const [lyrics, setLyrics] = useState('');
   const [cityTag, setCityTag] = useState(settings.defaultCity);
   const [shoutout, setShoutout] = useState('');
-  const [isDraft, setIsDraft] = useState(variant === 'full' ? settings.defaultUploadDraft : false);
-  const [showAdvanced, setShowAdvanced] = useState(variant === 'full');
+  const [isDraft, setIsDraft] = useState(effectiveVariant === 'full' ? settings.defaultUploadDraft : false);
+  const [showAdvanced, setShowAdvanced] = useState(isReelMode || effectiveVariant === 'full');
   const [scheduleAt, setScheduleAt] = useState('');
   const [followersOnly, setFollowersOnly] = useState(false);
   const [earlyAccess, setEarlyAccess] = useState(false);
@@ -160,7 +163,7 @@ export default function UploadSongForm({ studioId, onUploaded, variant = 'full' 
         clipScheduledAt: clipScheduleAt || null,
         moodTags,
         collabStudioId: collabStudioId.trim() || null,
-        status: isDraft ? 'draft' : scheduleAt ? 'scheduled' : 'published',
+        status: isReelMode ? 'published' : isDraft ? 'draft' : scheduleAt ? 'scheduled' : 'published',
         publishAt: scheduleAt || undefined,
         description: description.trim() || undefined,
         lyrics: lyrics.trim() || undefined,
@@ -194,7 +197,7 @@ export default function UploadSongForm({ studioId, onUploaded, variant = 'full' 
   return (
     <form onSubmit={handleSubmit} className="liquid-glass rounded-2xl p-4" style={{ background: 'var(--glass-bg)' }}>
       <h3 className="mb-3 flex items-center gap-2 text-sm text-[var(--text-primary)]">
-        <Upload size={16} /> {variant === 'simple' ? t('upload.publishBtn') : t('studio.upload')}
+        <Upload size={16} /> {isReelMode ? t('create.reelFormTitle') : effectiveVariant === 'simple' ? t('upload.publishBtn') : t('studio.upload')}
       </h3>
       <div className="space-y-3">
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('studio.songTitle')} required className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
@@ -203,7 +206,7 @@ export default function UploadSongForm({ studioId, onUploaded, variant = 'full' 
             type="file"
             accept=".mp3,.mp4,audio/mpeg,audio/mp3,video/mp4,audio/*"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            required={variant === 'simple'}
+            required={effectiveVariant === 'simple'}
             className="w-full text-sm text-[var(--text-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-blue-700 file:px-3 file:py-1.5 file:text-white"
           />
           <p className="mt-1 text-xs text-[var(--text-muted)]">{t('upload.formatsHint')}</p>
@@ -216,7 +219,7 @@ export default function UploadSongForm({ studioId, onUploaded, variant = 'full' 
             <button key={tag} type="button" onClick={() => toggleTag(tag)} className={`rounded-lg px-2.5 py-1 text-xs ${tags.includes(tag) ? 'bg-blue-700 text-white' : 'bg-white/10 text-[var(--text-muted)]'}`}>#{tag}</button>
           ))}
         </div>
-        {variant === 'simple' && (
+        {effectiveVariant === 'simple' && !isReelMode && (
           <button type="button" onClick={() => setShowAdvanced((v) => !v)} className="text-xs text-blue-400">
             {showAdvanced ? t('upload.hideAdvanced') : t('upload.showAdvanced')}
           </button>
@@ -270,7 +273,7 @@ export default function UploadSongForm({ studioId, onUploaded, variant = 'full' 
         )}
         {error && <p className="text-xs text-red-400">{error}</p>}
         <button type="submit" disabled={loading || !file || !title.trim()} className="w-full rounded-xl bg-white py-2.5 text-sm text-gray-900 disabled:opacity-50">
-          {loading ? t('upload.uploading') : variant === 'simple' ? t('upload.publishBtn') : t('studio.upload')}
+          {loading ? t('upload.uploading') : isReelMode ? t('create.reelPublish') : effectiveVariant === 'simple' ? t('upload.publishBtn') : t('studio.upload')}
         </button>
       </div>
     </form>

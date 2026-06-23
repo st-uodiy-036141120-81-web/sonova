@@ -74,6 +74,7 @@ export interface LiveSession {
   started_at: string;
   ended_at: string | null;
   host?: Profile;
+  studio?: Studio;
 }
 
 export interface SongAppeal {

@@ -219,6 +219,16 @@ export async function disable2FA(_userId: string) {
   /* no-op */
 }
 
+export async function fetchStudioDrafts(studioId: string): Promise<Song[]> {
+  const { data } = await requireClient()
+    .from('songs')
+    .select('*, studio:studios(*, owner:profiles(*))')
+    .eq('studio_id', studioId)
+    .in('status', ['draft', 'scheduled'])
+    .order('created_at', { ascending: false });
+  return (data ?? []).map(normSong);
+}
+
 // ── Stories ──
 export async function postStudioStory(studioId: string, content: string, mediaUrl?: string) {
   const expires = new Date(Date.now() + 24 * 86_400_000).toISOString();

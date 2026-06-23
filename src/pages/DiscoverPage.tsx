@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Flame, MapPin, Disc3, Sparkles } from 'lucide-react';
+import { Flame, MapPin, Disc3, Sparkles, Radio } from 'lucide-react';
 import PageLayout from '../components/PageLayout';
 import SongCard from '../components/SongCard';
 import { fetchTrendingSongs, fetchRemixesWeek, fetchSongsByCity, fetchMoodPlaylist } from '../lib/platformApi';
-import type { Song, PlayerTrack } from '../lib/types';
+import { fetchActiveLiveSessions } from '../lib/featuresApi';
+import type { Song, PlayerTrack, LiveSession } from '../lib/types';
 
 const MOODS = ['study', 'night', 'workout'] as const;
 const CITIES = ['cairo', 'dubai', 'london', 'paris'];
@@ -16,11 +17,13 @@ export default function DiscoverPage() {
   const [remixes, setRemixes] = useState<Song[]>([]);
   const [citySongs, setCitySongs] = useState<Song[]>([]);
   const [moodSongs, setMoodSongs] = useState<Record<string, Song[]>>({});
+  const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
 
   useEffect(() => {
     fetchTrendingSongs(8).then(setTrending);
     fetchRemixesWeek(6).then(setRemixes);
     fetchSongsByCity('cairo', 6).then(setCitySongs);
+    fetchActiveLiveSessions(8).then(setLiveSessions);
     for (const m of MOODS) fetchMoodPlaylist(m, 4).then((s) => setMoodSongs((prev) => ({ ...prev, [m]: s })));
   }, []);
 
@@ -49,6 +52,29 @@ export default function DiscoverPage() {
       </div>
 
       <div className="mt-10">
+        {liveSessions.length > 0 && (
+          <section className="mb-10">
+            <h2 className="mb-4 flex items-center gap-2 text-lg text-[var(--text-primary)]">
+              <Radio size={18} className="text-red-400" /> {t('live.browseTitle')}
+            </h2>
+            <div className="space-y-2">
+              {liveSessions.map((session) => {
+                const uname = session.studio?.owner?.username ?? session.host?.username;
+                if (!uname) return null;
+                return (
+                  <Link key={session.id} to={`/live/${uname}`} className="liquid-glass flex items-center gap-3 rounded-xl p-3 ring-1 ring-red-500/30">
+                    <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] text-white animate-pulse">LIVE</span>
+                    <div>
+                      <p className="text-sm text-[var(--text-primary)]">{session.title}</p>
+                      <p className="text-xs text-[var(--text-muted)]">@{uname}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            <Link to="/live" className="mt-2 inline-block text-xs text-blue-400">{t('create.browseLive')}</Link>
+          </section>
+        )}
         <Section icon={Flame} title={t('discover.trending')} songs={trending} />
         <Section icon={Disc3} title={t('discover.remixes')} songs={remixes} />
         <Section icon={MapPin} title={t('discover.byCity')} songs={citySongs} />

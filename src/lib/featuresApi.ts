@@ -118,6 +118,16 @@ export async function fetchActiveLive(studioId: string): Promise<LiveSession | n
   return data as LiveSession | null;
 }
 
+export async function fetchActiveLiveSessions(limit = 20): Promise<LiveSession[]> {
+  const { data } = await requireClient()
+    .from('live_sessions')
+    .select('*, host:profiles(*), studio:studios(*, owner:profiles(*))')
+    .eq('is_active', true)
+    .order('started_at', { ascending: false })
+    .limit(limit);
+  return (data ?? []) as LiveSession[];
+}
+
 export async function applyReferral(newUserId: string, referralCode: string) {
   const { data: referrer } = await requireClient()
     .from('profiles')
