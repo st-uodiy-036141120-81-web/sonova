@@ -1,7 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "sonova",
-  "account_id": "5a77560b9c1203fef91a445e881fd04c",
   "compatibility_date": "2026-06-15",
   "assets": {
     "directory": "./dist",

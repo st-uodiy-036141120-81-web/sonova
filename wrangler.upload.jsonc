@@ -2,7 +2,6 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "sonova-upload",
   "main": "supabase/r2-worker.js",
-  "account_id": "5a77560b9c1203fef91a445e881fd04c",
   "compatibility_date": "2026-06-15",
   "r2_buckets": [
     {
@@ -12,6 +11,6 @@
   ],
   "vars": {
     "ALLOWED_ORIGIN": "https://sonova.st-uodiy-036141120-81.workers.dev",
-    "PUBLIC_BASE_URL": "https://sonova.st-uodiy-036141120-81.workers.dev/media"
+    "PUBLIC_BASE_URL": "https://pub-sonova-media.r2.dev"
   }
 }
