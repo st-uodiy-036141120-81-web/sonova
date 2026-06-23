@@ -45,7 +45,6 @@ as $$
 declare
   v_uid uuid := auth.uid();
   v_name text := coalesce(nullif(trim(p_display_name), ''), trim(p_username));
-  v_row public.profiles;
 begin
   if v_uid is null then
     raise exception 'Not authenticated';
@@ -64,27 +63,19 @@ begin
   values (v_uid, trim(p_username), v_name)
   on conflict (id) do update
     set username = excluded.username,
-        display_name = excluded.display_name
-  returning * into v_row;
+        display_name = excluded.display_name;
 
   insert into public.studios (owner_id, name, description)
   values (v_uid, v_name || '''s Studio', '')
   on conflict (owner_id) do nothing;
 
-  return jsonb_build_object(
-    'id', v_row.id,
-    'username', v_row.username,
-    'display_name', v_row.display_name,
-    'bio', v_row.bio,
-    'avatar_url', v_row.avatar_url,
-    'created_at', v_row.created_at,
-    'taste_tags', coalesce(v_row.taste_tags, '{}'::text[]),
-    'trust_score', coalesce(v_row.trust_score, 0),
-    'referral_code', v_row.referral_code,
-    'verified', coalesce(v_row.verified, false),
-    'is_admin', coalesce(v_row.is_admin, false),
-    'totp_enabled', coalesce(v_row.totp_enabled, false),
-    'settings', coalesce(v_row.settings, '{}'::jsonb)
+  return (
+    select to_jsonb(p)
+      - 'totp_secret'
+      - 'daily_upload_count'
+      - 'upload_count_date'
+    from public.profiles p
+    where p.id = v_uid
   );
 end;
 $$;
