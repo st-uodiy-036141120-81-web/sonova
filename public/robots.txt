@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sonova.app/sitemap.xml
