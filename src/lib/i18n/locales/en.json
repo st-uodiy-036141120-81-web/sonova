@@ -16,7 +16,8 @@
     "settings": "Settings",
     "notifications": "Notifications",
     "reels": "Reels",
-    "discover": "Discover"
+    "discover": "Discover",
+    "upload": "Upload"
   },
   "home": {
     "badge": "MP3 & MP4 publishing",
@@ -349,6 +350,17 @@
   "listenLike": { "title": "Listen like", "link": "Listen like this artist" },
   "saved": { "title": "Listen later", "save": "Save", "empty": "Nothing saved" },
   "upload": {
+    "pageTitle": "Publish a track",
+    "formatsHint": "MP3 for audio · MP4 for video (max 3 hours)",
+    "publishBtn": "Publish now",
+    "uploading": "Uploading…",
+    "selectedFormat": "Format: {{format}}",
+    "invalidFormat": "File must be MP3 or MP4",
+    "showAdvanced": "Advanced options",
+    "hideAdvanced": "Hide advanced options",
+    "viewStudio": "View my studio",
+    "noStudio": "No studio yet — complete your profile first",
+    "completeProfile": "Complete profile",
     "description": "Description",
     "lyrics": "Lyrics / notes",
     "city": "City tag",

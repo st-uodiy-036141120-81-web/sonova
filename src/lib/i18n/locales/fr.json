@@ -16,7 +16,8 @@
     "settings": "Paramètres",
     "notifications": "Notifications",
     "reels": "Reels",
-    "discover": "Découvrir"
+    "discover": "Découvrir",
+    "upload": "Publier"
   },
   "home": {
     "badge": "Publication MP3 & MP4",
@@ -349,6 +350,17 @@
   "listenLike": { "title": "Écouter comme", "link": "Écouter comme cet artiste" },
   "saved": { "title": "Écouter plus tard", "save": "Enregistrer", "empty": "Rien d'enregistré" },
   "upload": {
+    "pageTitle": "Publier un morceau",
+    "formatsHint": "MP3 pour l'audio · MP4 pour la vidéo (max 3 h)",
+    "publishBtn": "Publier",
+    "uploading": "Envoi en cours…",
+    "selectedFormat": "Format : {{format}}",
+    "invalidFormat": "Le fichier doit être MP3 ou MP4",
+    "showAdvanced": "Options avancées",
+    "hideAdvanced": "Masquer les options avancées",
+    "viewStudio": "Voir mon studio",
+    "noStudio": "Pas de studio — complétez votre profil",
+    "completeProfile": "Compléter le profil",
     "description": "Description",
     "lyrics": "Paroles / notes",
     "city": "Ville",

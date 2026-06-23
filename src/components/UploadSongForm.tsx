@@ -15,12 +15,15 @@ import { defaultClipRange, validateReelClip } from '../lib/reelClip';
 import { saveSongReelClips } from '../lib/reelsFeatures/api';
 import { uploadFile } from '../lib/storage';
 
+import { getErrorMessage } from '../lib/errors';
+
 interface UploadSongFormProps {
   studioId: string;
   onUploaded: () => void;
+  variant?: 'simple' | 'full';
 }
 
-export default function UploadSongForm({ studioId, onUploaded }: UploadSongFormProps) {
+export default function UploadSongForm({ studioId, onUploaded, variant = 'full' }: UploadSongFormProps) {
   const { user } = useAuth();
   const { settings } = useUserSettings();
   const { t } = useTranslation();
@@ -47,7 +50,8 @@ export default function UploadSongForm({ studioId, onUploaded }: UploadSongFormP
   const [lyrics, setLyrics] = useState('');
   const [cityTag, setCityTag] = useState(settings.defaultCity);
   const [shoutout, setShoutout] = useState('');
-  const [isDraft, setIsDraft] = useState(settings.defaultUploadDraft);
+  const [isDraft, setIsDraft] = useState(variant === 'full' ? settings.defaultUploadDraft : false);
+  const [showAdvanced, setShowAdvanced] = useState(variant === 'full');
   const [scheduleAt, setScheduleAt] = useState('');
   const [followersOnly, setFollowersOnly] = useState(false);
   const [earlyAccess, setEarlyAccess] = useState(false);
@@ -84,9 +88,15 @@ export default function UploadSongForm({ studioId, onUploaded }: UploadSongFormP
     setError('');
     setClipError('');
     if (!file || !title.trim()) return;
-    if (!isValidAudioFile(file)) return;
+    if (!isValidAudioFile(file)) {
+      setError(t('upload.invalidFormat'));
+      return;
+    }
     const fileType = getFileType(file);
-    if (!fileType) return;
+    if (!fileType) {
+      setError(t('upload.invalidFormat'));
+      return;
+    }
 
     if (user && !(await checkUploadRateLimit(user.id))) {
       setError(t('upload.rateLimit'));
@@ -173,70 +183,95 @@ export default function UploadSongForm({ studioId, onUploaded }: UploadSongFormP
       setFile(null);
       onUploaded();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
+  const fileTypeLabel = file ? getFileType(file)?.toUpperCase() : null;
+
   return (
     <form onSubmit={handleSubmit} className="liquid-glass rounded-2xl p-4" style={{ background: 'var(--glass-bg)' }}>
       <h3 className="mb-3 flex items-center gap-2 text-sm text-[var(--text-primary)]">
-        <Upload size={16} /> {t('studio.upload')}
+        <Upload size={16} /> {variant === 'simple' ? t('upload.publishBtn') : t('studio.upload')}
       </h3>
       <div className="space-y-3">
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('studio.songTitle')} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('upload.description')} rows={2} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
-        <textarea value={lyrics} onChange={(e) => setLyrics(e.target.value)} placeholder={t('upload.lyrics')} rows={3} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
-        <input type="file" accept=".mp3,.mp4,audio/*,video/mp4" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="w-full text-sm text-[var(--text-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-blue-700 file:px-3 file:py-1.5 file:text-white" />
-        <ReelClipEditor
-          enabled={reelClipEnabled}
-          onEnabledChange={setReelClipEnabled}
-          startSeconds={clipStart}
-          endSeconds={clipEnd}
-          onStartChange={setClipStart}
-          onEndChange={setClipEnd}
-          durationSeconds={fileDuration}
-          previewUrl={previewUrl}
-          waveformPeaks={waveformPeaks}
-          loopCount={loopCount}
-          onLoopCountChange={setLoopCount}
-          caption={caption}
-          onCaptionChange={setCaption}
-          moodTags={moodTags}
-          onMoodTagsChange={setMoodTags}
-          scheduleAt={clipScheduleAt}
-          onScheduleAtChange={setClipScheduleAt}
-          collabStudioId={collabStudioId}
-          onCollabStudioIdChange={setCollabStudioId}
-          coverFile={coverFile}
-          onCoverFileChange={setCoverFile}
-          extraClips={extraClips}
-          onExtraClipsChange={setExtraClips}
-          title={title}
-          tags={tags}
-          error={clipError}
-        />
-        <input value={originalSongId} onChange={(e) => setOriginalSongId(e.target.value)} placeholder={t('song.originalId')} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
-        <input value={cityTag} onChange={(e) => setCityTag(e.target.value)} placeholder={t('upload.city')} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
-        <input value={shoutout} onChange={(e) => setShoutout(e.target.value)} placeholder={t('upload.shoutout')} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
-        <input type="datetime-local" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
-        <div className="flex flex-wrap gap-2">
-          {(['128', '320', 'flac'] as const).map((q) => (
-            <button key={q} type="button" onClick={() => setQuality(q)} className={`rounded-lg px-2.5 py-1 text-xs ${quality === q ? 'bg-blue-700 text-white' : 'bg-white/10 text-[var(--text-muted)]'}`}>{q}k</button>
-          ))}
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('studio.songTitle')} required className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
+        <div>
+          <input
+            type="file"
+            accept=".mp3,.mp4,audio/mpeg,audio/mp3,video/mp4,audio/*"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            required={variant === 'simple'}
+            className="w-full text-sm text-[var(--text-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-blue-700 file:px-3 file:py-1.5 file:text-white"
+          />
+          <p className="mt-1 text-xs text-[var(--text-muted)]">{t('upload.formatsHint')}</p>
+          {fileTypeLabel && (
+            <p className="mt-1 text-xs text-green-400">{t('upload.selectedFormat', { format: fileTypeLabel })}</p>
+          )}
         </div>
-        <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><input type="checkbox" checked={isDraft} onChange={(e) => setIsDraft(e.target.checked)} />{t('upload.draft')}</label>
-        <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><input type="checkbox" checked={followersOnly} onChange={(e) => setFollowersOnly(e.target.checked)} />{t('upload.followersOnly')}</label>
-        <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><input type="checkbox" checked={earlyAccess} onChange={(e) => setEarlyAccess(e.target.checked)} />{t('upload.earlyAccess')}</label>
-        <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><input type="checkbox" checked={isExclusive} onChange={(e) => setIsExclusive(e.target.checked)} />{t('upload.exclusive')}</label>
         <div className="flex flex-wrap gap-2">
           {POPULAR_TAGS.map((tag) => (
             <button key={tag} type="button" onClick={() => toggleTag(tag)} className={`rounded-lg px-2.5 py-1 text-xs ${tags.includes(tag) ? 'bg-blue-700 text-white' : 'bg-white/10 text-[var(--text-muted)]'}`}>#{tag}</button>
           ))}
         </div>
+        {variant === 'simple' && (
+          <button type="button" onClick={() => setShowAdvanced((v) => !v)} className="text-xs text-blue-400">
+            {showAdvanced ? t('upload.hideAdvanced') : t('upload.showAdvanced')}
+          </button>
+        )}
+        {showAdvanced && (
+          <>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('upload.description')} rows={2} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
+            <textarea value={lyrics} onChange={(e) => setLyrics(e.target.value)} placeholder={t('upload.lyrics')} rows={3} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
+            <ReelClipEditor
+              enabled={reelClipEnabled}
+              onEnabledChange={setReelClipEnabled}
+              startSeconds={clipStart}
+              endSeconds={clipEnd}
+              onStartChange={setClipStart}
+              onEndChange={setClipEnd}
+              durationSeconds={fileDuration}
+              previewUrl={previewUrl}
+              waveformPeaks={waveformPeaks}
+              loopCount={loopCount}
+              onLoopCountChange={setLoopCount}
+              caption={caption}
+              onCaptionChange={setCaption}
+              moodTags={moodTags}
+              onMoodTagsChange={setMoodTags}
+              scheduleAt={clipScheduleAt}
+              onScheduleAtChange={setClipScheduleAt}
+              collabStudioId={collabStudioId}
+              onCollabStudioIdChange={setCollabStudioId}
+              coverFile={coverFile}
+              onCoverFileChange={setCoverFile}
+              extraClips={extraClips}
+              onExtraClipsChange={setExtraClips}
+              title={title}
+              tags={tags}
+              error={clipError}
+            />
+            <input value={originalSongId} onChange={(e) => setOriginalSongId(e.target.value)} placeholder={t('song.originalId')} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
+            <input value={cityTag} onChange={(e) => setCityTag(e.target.value)} placeholder={t('upload.city')} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
+            <input value={shoutout} onChange={(e) => setShoutout(e.target.value)} placeholder={t('upload.shoutout')} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
+            <input type="datetime-local" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} className="w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none" />
+            <div className="flex flex-wrap gap-2">
+              {(['128', '320', 'flac'] as const).map((q) => (
+                <button key={q} type="button" onClick={() => setQuality(q)} className={`rounded-lg px-2.5 py-1 text-xs ${quality === q ? 'bg-blue-700 text-white' : 'bg-white/10 text-[var(--text-muted)]'}`}>{q}k</button>
+              ))}
+            </div>
+            <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><input type="checkbox" checked={isDraft} onChange={(e) => setIsDraft(e.target.checked)} />{t('upload.draft')}</label>
+            <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><input type="checkbox" checked={followersOnly} onChange={(e) => setFollowersOnly(e.target.checked)} />{t('upload.followersOnly')}</label>
+            <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><input type="checkbox" checked={earlyAccess} onChange={(e) => setEarlyAccess(e.target.checked)} />{t('upload.earlyAccess')}</label>
+            <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]"><input type="checkbox" checked={isExclusive} onChange={(e) => setIsExclusive(e.target.checked)} />{t('upload.exclusive')}</label>
+          </>
+        )}
         {error && <p className="text-xs text-red-400">{error}</p>}
-        <button type="submit" disabled={loading} className="w-full rounded-xl bg-white py-2.5 text-sm text-gray-900 disabled:opacity-50">{loading ? '...' : t('studio.upload')}</button>
+        <button type="submit" disabled={loading || !file || !title.trim()} className="w-full rounded-xl bg-white py-2.5 text-sm text-gray-900 disabled:opacity-50">
+          {loading ? t('upload.uploading') : variant === 'simple' ? t('upload.publishBtn') : t('studio.upload')}
+        </button>
       </div>
     </form>
   );

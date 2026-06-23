@@ -35,6 +35,7 @@ import ListeningRoomPage from './pages/ListeningRoomPage';
 import ClipAnalyticsPage from './pages/ClipAnalyticsPage';
 import SavedPage from './pages/SavedPage';
 import LegalPage from './pages/LegalPage';
+import UploadPage from './pages/UploadPage';
 import CookieConsent from './components/CookieConsent';
 import AppLoadingScreen from './components/AppLoadingScreen';
 import RequireAuth, { GuestOnly } from './components/RequireAuth';
@@ -108,6 +109,7 @@ export default function App() {
                   <Route path="/taste-twin" element={<TasteTwinPage />} />
                   <Route path="/room/:id" element={<ListeningRoomPage />} />
                   <Route path="/clip-analytics/:songId" element={<RequireAuth><ClipAnalyticsPage /></RequireAuth>} />
+                  <Route path="/upload" element={<RequireAuth><UploadPage /></RequireAuth>} />
                   <Route path="/legal/:doc" element={<LegalPage />} />
                   <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
                 </Routes>

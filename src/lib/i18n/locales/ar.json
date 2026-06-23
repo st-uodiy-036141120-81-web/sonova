@@ -16,7 +16,8 @@
     "settings": "الإعدادات",
     "notifications": "الإشعارات",
     "reels": "ريلز",
-    "discover": "اكتشف"
+    "discover": "اكتشف",
+    "upload": "نشر أغنية"
   },
   "home": {
     "badge": "نشر MP3 & MP4",
@@ -354,6 +355,17 @@
   "listenLike": { "title": "استمع مثل", "link": "استمع مثل هذا الفنان" },
   "saved": { "title": "استمع لاحقاً", "save": "حفظ", "empty": "لا محفوظات" },
   "upload": {
+    "pageTitle": "نشر أغنية",
+    "formatsHint": "MP3 للصوت · MP4 للفيديو (حد أقصى 3 ساعات)",
+    "publishBtn": "نشر الآن",
+    "uploading": "جاري الرفع…",
+    "selectedFormat": "النوع: {{format}}",
+    "invalidFormat": "الملف يجب أن يكون MP3 أو MP4",
+    "showAdvanced": "خيارات متقدمة",
+    "hideAdvanced": "إخفاء الخيارات المتقدمة",
+    "viewStudio": "عرض استوديوي",
+    "noStudio": "لا يوجد استوديو — أكمل ملفك أولاً",
+    "completeProfile": "إكمال الملف",
     "description": "وصف الأغنية",
     "lyrics": "كلمات / ملاحظات",
     "city": "المدينة (cairo, dubai...)",
