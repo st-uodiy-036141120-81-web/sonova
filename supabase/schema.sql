@@ -164,7 +164,7 @@ create policy "songs update own studio" on public.songs for update
   using (exists (select 1 from public.studios s where s.id = studio_id and s.owner_id = auth.uid()));
 create policy "songs delete own studio" on public.songs for delete
   using (exists (select 1 from public.studios s where s.id = studio_id and s.owner_id = auth.uid()));
-create policy "songs increment stats" on public.songs for update using (true) with check (true);
+-- Play/download/like counters: use RPC + triggers (see migration_v9_security.sql)
 
 -- Comments
 create policy "comments read all" on public.studio_comments for select using (true);
@@ -219,7 +219,7 @@ create policy "transfers update recipient" on public.song_transfers for update
 -- Notifications
 create policy "notifications read own" on public.notifications for select using (auth.uid() = user_id);
 create policy "notifications update own" on public.notifications for update using (auth.uid() = user_id);
-create policy "notifications insert system" on public.notifications for insert with check (true);
+-- Inserts via notify_user() RPC only (see migration_v9_security.sql)
 
 -- Reports
 create policy "reports insert auth" on public.comment_reports for insert with check (auth.uid() = reporter_id);

@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { validateUsername, validatePasswordMatch, USERNAME_MAX_LENGTH } from '../lib/validators';
 import { isUsernameAvailable } from '../lib/api';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { getErrorMessage, isUniqueViolation } from '../lib/errors';
 
 export default function RegisterPage() {
   const { signUp, resendVerification } = useAuth();
@@ -47,7 +48,8 @@ export default function RegisterPage() {
         await resendVerification(email.trim()).catch(() => {});
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error');
+      if (isUniqueViolation(err)) setError(t('auth.usernameTaken'));
+      else setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

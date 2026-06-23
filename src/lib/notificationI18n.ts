@@ -64,12 +64,12 @@ export async function createNotification(
   const settings = await fetchUserSettings(userId);
   if (!shouldNotify(settings, type)) return;
 
-  await requireClient().from('notifications').insert({
-    user_id: userId,
-    type,
-    title: titleKey,
-    body: encodeBody(bodyKey, params),
-    link: link ?? null,
+  await requireClient().rpc('notify_user', {
+    p_user_id: userId,
+    p_type: type,
+    p_title: titleKey,
+    p_body: encodeBody(bodyKey, params),
+    p_link: link ?? null,
   });
 }
 

@@ -45,6 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfileLoading(true);
     try {
       const p = await fetchProfile(userId);
+      if (supabase) {
+        const { data } = await supabase.auth.getUser();
+        if (data.user?.id !== userId) return;
+      }
       setProfile(p);
       if (p) {
         void (async () => {
@@ -61,8 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         })();
       }
-    } catch {
-      setProfile(null);
+    } catch (err) {
+      console.error('Profile load failed', err);
+      // Keep existing profile on transient errors — don't treat as missing profile
     } finally {
       setProfileLoading(false);
     }
@@ -89,8 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
-      setUser(sess?.user ?? null);
-      if (sess?.user) void loadProfile(sess.user.id);
+      const nextUser = sess?.user ?? null;
+      setUser(nextUser);
+      if (nextUser) void loadProfile(nextUser.id);
       else setProfile(null);
     });
 
@@ -139,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return 'SUPABASE_NOT_CONFIGURED';
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/onboarding` },
+      options: { redirectTo: `${window.location.origin}/` },
     });
     return error?.message ?? null;
   }, []);
@@ -177,7 +183,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, loadProfile]);
 
   const emailVerified = Boolean(user?.email_confirmed_at ?? user?.confirmed_at);
-  const needsOnboarding = Boolean(user && !profile && !profileLoading);
+  const onboardingComplete = Boolean(profile?.taste_tags && profile.taste_tags.length >= 3);
+  const needsOnboarding = Boolean(user && !profileLoading && (!profile || !onboardingComplete));
 
   const value = useMemo(
     () => ({

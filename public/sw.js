@@ -1,4 +1,4 @@
-const SHELL = 'sonova-v3';
+const SHELL = 'sonova-v5';
 const AUDIO = 'sonova-audio-v1';
 const ASSETS = ['/manifest.webmanifest', '/favicon.svg'];
 
@@ -74,6 +74,9 @@ self.addEventListener('push', (e) => {
 
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  const url = e.notification.data?.url ?? '/';
+  let url = e.notification.data?.url ?? '/';
+  if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//')) {
+    url = '/';
+  }
   e.waitUntil(clients.openWindow(url));
 });

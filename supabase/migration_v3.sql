@@ -66,7 +66,7 @@ declare
   uname text := new.raw_user_meta_data->>'username';
   dname text := coalesce(new.raw_user_meta_data->>'display_name', uname);
 begin
-  if uname is not null and uname ~ '^[a-zA-Z0-9]{7,}$' then
+  if uname is not null and uname ~ '^[a-zA-Z0-9]{1,7}$' then
     insert into public.profiles (id, username, display_name)
     values (new.id, uname, dname)
     on conflict (id) do nothing;

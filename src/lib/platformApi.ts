@@ -199,23 +199,24 @@ export async function publishDraft(songId: string, publishAt?: string) {
   }).eq('id', songId);
 }
 
-// ── Rate limit ──
-export async function checkUploadRateLimit(userId: string, maxDaily = 10): Promise<boolean> {
-  const today = new Date().toISOString().slice(0, 10);
-  const { data } = await requireClient().from('profiles').select('daily_upload_count, upload_count_date').eq('id', userId).single();
-  if (!data) return true;
-  if (data.upload_count_date !== today) {
-    await requireClient().from('profiles').update({ daily_upload_count: 0, upload_count_date: today }).eq('id', userId);
-    return true;
-  }
-  return (data.daily_upload_count ?? 0) < maxDaily;
+// ── Rate limit (server-enforced) ──
+export async function checkUploadRateLimit(_userId: string, maxDaily = 10): Promise<boolean> {
+  const { data, error } = await requireClient().rpc('can_upload_today', { p_max: maxDaily });
+  if (error) return true;
+  return Boolean(data);
 }
 
-export async function incrementUploadCount(userId: string) {
-  const today = new Date().toISOString().slice(0, 10);
-  const { data } = await requireClient().from('profiles').select('daily_upload_count, upload_count_date').eq('id', userId).single();
-  const count = data?.upload_count_date === today ? (data.daily_upload_count ?? 0) + 1 : 1;
-  await requireClient().from('profiles').update({ daily_upload_count: count, upload_count_date: today }).eq('id', userId);
+export async function incrementUploadCount(_userId: string) {
+  await requireClient().rpc('record_upload_today');
+}
+
+// ── 2FA: not yet implemented — disabled until real TOTP flow exists ──
+export async function enable2FA(_userId: string): Promise<string> {
+  throw new Error('2FA_NOT_AVAILABLE');
+}
+
+export async function disable2FA(_userId: string) {
+  /* no-op */
 }
 
 // ── Stories ──
@@ -280,17 +281,6 @@ export async function sendTip(senderId: string, receiverId: string, amountCents:
     .single();
   if (error) throw error;
   return data as Tip;
-}
-
-// ── 2FA stub ──
-export async function enable2FA(userId: string) {
-  const secret = `SONOVA-${userId.slice(0, 8)}`;
-  await requireClient().from('profiles').update({ totp_secret: secret, totp_enabled: true }).eq('id', userId);
-  return secret;
-}
-
-export async function disable2FA(userId: string) {
-  await requireClient().from('profiles').update({ totp_secret: null, totp_enabled: false }).eq('id', userId);
 }
 
 // ── Push subscription ──

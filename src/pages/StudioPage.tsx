@@ -70,7 +70,7 @@ export default function StudioPage() {
       setStudioName(s.name);
       setStudioDesc(s.description ?? '');
       const [songList, commentList, pending, followCounts] = await Promise.all([
-        fetchStudioSongs(s.id, user?.id),
+        fetchStudioSongs(s.id, user?.id, s.owner_id),
         fetchStudioComments(s.id, user?.id),
         isOwner || s.owner_id === user?.id ? fetchPendingTransfers(s.id) : Promise.resolve([]),
         fetchFollowCounts(s.owner_id),

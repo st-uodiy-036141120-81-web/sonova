@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '../components/PageLayout';
@@ -8,19 +8,33 @@ import { createOAuthProfile } from '../lib/apiExtended';
 import { isUsernameAvailable, POPULAR_TAGS } from '../lib/api';
 import { saveTasteTags } from '../lib/featuresApi';
 import { validateUsername, USERNAME_MAX_LENGTH } from '../lib/validators';
+import { getErrorMessage, isUniqueViolation } from '../lib/errors';
 
 export default function OnboardingPage() {
   const { user, profile, refreshProfile, loading } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [step, setStep] = useState<'profile' | 'tags'>('profile');
+  const tagsComplete = (profile?.taste_tags?.length ?? 0) >= 3;
+  const needsUsername = !profile;
+  const [step, setStep] = useState<'profile' | 'tags'>(needsUsername ? 'profile' : 'tags');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(profile?.taste_tags?.slice(0, 3) ?? []);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  if (!loading && profile) {
+  useEffect(() => {
+    if (user?.user_metadata?.display_name && !displayName) {
+      setDisplayName(String(user.user_metadata.display_name));
+    }
+  }, [user, displayName]);
+
+  useEffect(() => {
+    if (profile && !tagsComplete) setStep('tags');
+    else if (!profile) setStep('profile');
+  }, [profile, tagsComplete]);
+
+  if (!loading && tagsComplete) {
     navigate('/');
     return <AppLoadingScreen />;
   }
@@ -47,6 +61,7 @@ export default function OnboardingPage() {
       return;
     }
     setSaving(true);
+    setError('');
     try {
       const available = await isUsernameAvailable(username.trim());
       if (!available) {
@@ -54,9 +69,16 @@ export default function OnboardingPage() {
         return;
       }
       await createOAuthProfile(user.id, username.trim(), displayName.trim() || username.trim());
+      await refreshProfile();
       setStep('tags');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error');
+      if (err instanceof Error && err.message === 'USERNAME_TAKEN') {
+        setError(t('auth.usernameTaken'));
+      } else if (isUniqueViolation(err)) {
+        setError(t('auth.usernameTaken'));
+      } else {
+        setError(getErrorMessage(err));
+      }
     } finally {
       setSaving(false);
     }
@@ -68,21 +90,24 @@ export default function OnboardingPage() {
       return;
     }
     setSaving(true);
+    setError('');
     try {
       await saveTasteTags(user.id, tags);
       await refreshProfile();
       navigate('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error');
+      setError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
   };
 
+  const showProfileStep = step === 'profile' && !profile;
+
   return (
     <PageLayout className="flex min-h-screen items-center justify-center px-4 pb-24 pt-28">
       <div className="liquid-glass w-full max-w-md rounded-2xl p-8" style={{ background: 'var(--glass-bg)' }}>
-        {step === 'profile' ? (
+        {showProfileStep ? (
           <>
             <h1 className="text-2xl text-[var(--text-primary)]">{t('auth.oauthSetup')}</h1>
             <form onSubmit={handleProfileSubmit} className="mt-6 space-y-4">

@@ -16,11 +16,20 @@ export function cdnUrl(url: string): string {
 
 export async function uploadFile(bucket: 'avatars' | 'songs', path: string, file: File): Promise<string> {
   if (R2_UPLOAD_URL) {
+    if (!supabase) throw new Error('SUPABASE_NOT_CONFIGURED');
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    if (!token) throw new Error('NOT_AUTHENTICATED');
+
     const form = new FormData();
     form.append('file', file);
     form.append('path', path);
     form.append('bucket', bucket);
-    const res = await fetch(R2_UPLOAD_URL, { method: 'POST', body: form });
+    const res = await fetch(R2_UPLOAD_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
     if (!res.ok) throw new Error('R2 upload failed');
     const { url } = (await res.json()) as { url: string };
     return cdnUrl(url);

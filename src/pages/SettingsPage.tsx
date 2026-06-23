@@ -7,7 +7,7 @@ import { SettingsTabBar } from '../components/settings/SettingControls';
 import SettingsPanels from '../components/settings/SettingsPanels';
 import { useAuth } from '../context/AuthContext';
 import { useUserSettings } from '../context/UserSettingsContext';
-import { enable2FA, disable2FA, savePushSubscription } from '../lib/platformApi';
+import { savePushSubscription } from '../lib/platformApi';
 import { saveTasteTags } from '../lib/featuresApi';
 import { resetLocalTaste } from '../lib/tasteStorage';
 import {
@@ -50,7 +50,6 @@ export default function SettingsPage() {
 
   const [blocked, setBlocked] = useState<Profile[]>([]);
   const [studio, setStudio] = useState<Studio | null>(null);
-  const [totpSecret, setTotpSecret] = useState('');
   const [pushDone, setPushDone] = useState(false);
 
   const [displayName, setDisplayName] = useState('');
@@ -345,16 +344,6 @@ export default function SettingsPage() {
                 if (!user) return;
                 await unblockUser(user.id, id);
                 setBlocked((prev) => prev.filter((p) => p.id !== id));
-              }}
-              totpSecret={totpSecret}
-              onEnable2fa={async () => {
-                if (!user) return;
-                setTotpSecret(await enable2FA(user.id));
-              }}
-              onDisable2fa={async () => {
-                if (!user) return;
-                await disable2FA(user.id);
-                await refreshProfile();
               }}
               onEnablePush={async () => {
                 if (!user || !('serviceWorker' in navigator)) return;

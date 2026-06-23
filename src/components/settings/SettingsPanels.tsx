@@ -31,9 +31,6 @@ interface PanelsProps {
   onResendVerify?: () => void;
   blocked?: Profile[];
   onUnblock?: (id: string) => void;
-  totpSecret?: string;
-  onEnable2fa?: () => void;
-  onDisable2fa?: () => void;
   onEnablePush?: () => void;
   pushDone?: boolean;
   referralLink?: string | null;
@@ -54,9 +51,6 @@ export default function SettingsPanels({
   onResendVerify,
   blocked,
   onUnblock,
-  totpSecret,
-  onEnable2fa,
-  onDisable2fa,
   onEnablePush,
   pushDone,
   referralLink,
@@ -323,12 +317,7 @@ export default function SettingsPanels({
   if (tab === 'security') {
     return (
       <SettingGroup>
-        {profile.totp_enabled ? (
-          <button type="button" onClick={onDisable2fa} className="rounded-xl bg-red-600/80 px-4 py-2 text-sm text-white">{t('settings.disable2fa')}</button>
-        ) : (
-          <button type="button" onClick={onEnable2fa} className="rounded-xl bg-blue-700 px-4 py-2 text-sm text-white">{t('settings.enable2fa')}</button>
-        )}
-        {totpSecret && <p className="text-xs text-[var(--text-muted)]">{t('settings.totpSecret')}: {totpSecret}</p>}
+        <p className="text-xs text-[var(--text-muted)]">{t('settings.billingSoon')}</p>
         <button type="button" onClick={onEnablePush} className="rounded-xl bg-white/10 px-4 py-2 text-sm text-[var(--text-primary)]">
           {pushDone ? t('settings.pushEnabled') : t('settings.enablePush')}
         </button>

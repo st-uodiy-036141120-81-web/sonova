@@ -37,6 +37,7 @@ import SavedPage from './pages/SavedPage';
 import LegalPage from './pages/LegalPage';
 import CookieConsent from './components/CookieConsent';
 import AppLoadingScreen from './components/AppLoadingScreen';
+import RequireAuth, { GuestOnly } from './components/RequireAuth';
 
 function EmailVerificationGuard({ children }: { children: ReactNode }) {
   const { user, emailVerified, loading, profileLoading } = useAuth();
@@ -88,24 +89,24 @@ export default function App() {
                   <Route path="/embed/:id" element={<EmbedPage />} />
                   <Route path="/live/:username" element={<LivePage />} />
                   <Route path="/listen-like/:username" element={<ListenLikePage />} />
-                  <Route path="/saved" element={<SavedPage />} />
-                  <Route path="/analytics" element={<AnalyticsPage />} />
-                  <Route path="/taste-report" element={<TasteReportPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/saved" element={<RequireAuth><SavedPage /></RequireAuth>} />
+                  <Route path="/analytics" element={<RequireAuth><AnalyticsPage /></RequireAuth>} />
+                  <Route path="/taste-report" element={<RequireAuth><TasteReportPage /></RequireAuth>} />
+                  <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
+                  <Route path="/register" element={<GuestOnly><RegisterPage /></GuestOnly>} />
                   <Route path="/studio/:username" element={<StudioPage />} />
-                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/feed" element={<FeedPage />} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/messages" element={<MessagesPage />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/moderation" element={<ModerationPage />} />
+                  <Route path="/notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
+                  <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+                  <Route path="/messages" element={<RequireAuth><MessagesPage /></RequireAuth>} />
+                  <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+                  <Route path="/moderation" element={<RequireAuth><ModerationPage /></RequireAuth>} />
                   <Route path="/hook-challenge" element={<HookChallengePage />} />
                   <Route path="/taste-twin" element={<TasteTwinPage />} />
                   <Route path="/room/:id" element={<ListeningRoomPage />} />
-                  <Route path="/clip-analytics/:songId" element={<ClipAnalyticsPage />} />
+                  <Route path="/clip-analytics/:songId" element={<RequireAuth><ClipAnalyticsPage /></RequireAuth>} />
                   <Route path="/legal/:doc" element={<LegalPage />} />
                   <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
                 </Routes>

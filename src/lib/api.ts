@@ -162,7 +162,7 @@ export async function updateStudio(
 }
 
 // ── Songs ──
-export async function fetchStudioSongs(studioId: string, viewerId?: string): Promise<Song[]> {
+export async function fetchStudioSongs(studioId: string, viewerId?: string, ownerId?: string): Promise<Song[]> {
   const { data, error } = await requireClient()
     .from('songs')
     .select('*')
@@ -170,6 +170,25 @@ export async function fetchStudioSongs(studioId: string, viewerId?: string): Pro
     .order('created_at', { ascending: false });
   if (error) throw error;
   let songs = (data ?? []).map(normalizeSong);
+  const isOwner = Boolean(viewerId && ownerId && viewerId === ownerId);
+
+  if (!isOwner) {
+    const { canAccessSong } = await import('./platformApi');
+    let isFollower = false;
+    if (viewerId && ownerId) {
+      isFollower = await isFollowing(viewerId, ownerId);
+    }
+    const studioStub = { owner_id: ownerId ?? '' } as Studio;
+    songs = (
+      await Promise.all(
+        songs.map(async (s) => {
+          const ok = await canAccessSong({ ...s, studio: studioStub }, viewerId, isFollower);
+          return ok ? s : null;
+        })
+      )
+    ).filter((s): s is Song => s !== null);
+  }
+
   if (viewerId) {
     const liked = await fetchUserLikes(viewerId, songs.map((s) => s.id));
     songs = songs.map((s) => ({ ...s, liked_by_me: liked.has(s.id) }));
@@ -336,21 +355,11 @@ export async function updateSongReelClip(
 }
 
 export async function incrementPlayCount(songId: string) {
-  const { data } = await requireClient().from('songs').select('play_count').eq('id', songId).single();
-  if (!data) return;
-  await requireClient()
-    .from('songs')
-    .update({ play_count: (data.play_count ?? 0) + 1 })
-    .eq('id', songId);
+  await requireClient().rpc('increment_song_play_count', { p_song_id: songId });
 }
 
 export async function incrementDownloadCount(songId: string) {
-  const { data } = await requireClient().from('songs').select('download_count').eq('id', songId).single();
-  if (!data) return;
-  await requireClient()
-    .from('songs')
-    .update({ download_count: (data.download_count ?? 0) + 1 })
-    .eq('id', songId);
+  await requireClient().rpc('increment_song_download_count', { p_song_id: songId });
 }
 
 async function fetchUserLikes(userId: string, songIds: string[]): Promise<Set<string>> {
@@ -367,11 +376,9 @@ export async function toggleSongLike(userId: string, song: Song): Promise<boolea
   const client = requireClient();
   if (song.liked_by_me) {
     await client.from('song_likes').delete().eq('user_id', userId).eq('song_id', song.id);
-    await client.from('songs').update({ like_count: Math.max(0, song.like_count - 1) }).eq('id', song.id);
     return false;
   }
   await client.from('song_likes').insert({ user_id: userId, song_id: song.id });
-  await client.from('songs').update({ like_count: song.like_count + 1 }).eq('id', song.id);
   const studio = await requireClient().from('studios').select('owner_id').eq('id', song.studio_id).single();
   if (studio.data && studio.data.owner_id !== userId) {
     await createNotification(
@@ -395,7 +402,20 @@ export async function requestSongTransfer(
   songTitle: string,
   _targetUsername: string
 ) {
-  const { data, error } = await requireClient()
+  const client = requireClient();
+  const { data: song } = await client.from('songs').select('studio_id').eq('id', songId).single();
+  if (!song || song.studio_id !== fromStudioId) {
+    throw new Error('SONG_NOT_OWNED');
+  }
+  const { data: studio } = await client.from('studios').select('owner_id').eq('id', fromStudioId).single();
+  if (!studio || studio.owner_id !== requesterId) {
+    throw new Error('NOT_STUDIO_OWNER');
+  }
+  if (fromStudioId === toStudioId) {
+    throw new Error('SAME_STUDIO');
+  }
+
+  const { data, error } = await client
     .from('song_transfers')
     .insert({
       song_id: songId,

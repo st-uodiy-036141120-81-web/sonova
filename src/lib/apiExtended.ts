@@ -39,18 +39,65 @@ export async function createOAuthProfile(
   displayName: string
 ): Promise<Profile> {
   const client = requireClient();
-  const { data: profile, error } = await client
+  const normalizedUsername = username.trim();
+  const normalizedDisplayName = displayName.trim() || normalizedUsername;
+  const studioName = `${normalizedDisplayName}'s Studio`;
+
+  const { data: existing } = await client
     .from('profiles')
-    .insert({ id: userId, username, display_name: displayName })
-    .select()
-    .single();
-  if (error) throw error;
-  await client.from('studios').insert({
-    owner_id: userId,
-    name: `${displayName}'s Studio`,
-    description: '',
-  });
-  return profile as Profile;
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
+
+  const { data: taken } = await client
+    .from('profiles')
+    .select('id')
+    .eq('username', normalizedUsername)
+    .neq('id', userId)
+    .maybeSingle();
+  if (taken) throw new Error('USERNAME_TAKEN');
+
+  let profile: Profile;
+
+  if (existing) {
+    const { data, error } = await client
+      .from('profiles')
+      .update({ username: normalizedUsername, display_name: normalizedDisplayName })
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) throw error;
+    profile = data as Profile;
+  } else {
+    const { data, error } = await client
+      .from('profiles')
+      .insert({
+        id: userId,
+        username: normalizedUsername,
+        display_name: normalizedDisplayName,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    profile = data as Profile;
+  }
+
+  const { data: studio } = await client
+    .from('studios')
+    .select('id')
+    .eq('owner_id', userId)
+    .maybeSingle();
+
+  if (!studio) {
+    const { error: studioError } = await client.from('studios').insert({
+      owner_id: userId,
+      name: studioName,
+      description: '',
+    });
+    if (studioError) throw studioError;
+  }
+
+  return profile;
 }
 
 export async function sendMessage(senderId: string, receiverId: string, content: string) {
