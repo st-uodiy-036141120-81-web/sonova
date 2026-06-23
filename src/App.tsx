@@ -42,7 +42,7 @@ function EmailVerificationGuard({ children }: { children: ReactNode }) {
   const { user, emailVerified, loading, profileLoading } = useAuth();
   const { pathname } = useLocation();
   const publicPaths = ['/login', '/register', '/verify-email', '/onboarding'];
-  if (loading || profileLoading) return <AppLoadingScreen />;
+  if (loading || (profileLoading && !publicPaths.includes(pathname))) return <AppLoadingScreen />;
   if (user && !emailVerified && !publicPaths.includes(pathname)) {
     return <Navigate to="/verify-email" replace />;
   }
@@ -51,8 +51,11 @@ function EmailVerificationGuard({ children }: { children: ReactNode }) {
 
 function OnboardingGuard({ children }: { children: ReactNode }) {
   const { user, loading, needsOnboarding, profileLoading } = useAuth();
+  const { pathname } = useLocation();
   if (loading || profileLoading) return <AppLoadingScreen />;
-  if (user && needsOnboarding) return <Navigate to="/onboarding" replace />;
+  if (user && needsOnboarding && pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
   return <>{children}</>;
 }
 

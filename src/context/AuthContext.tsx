@@ -46,15 +46,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const p = await fetchProfile(userId);
       setProfile(p);
-      const ref = sessionStorage.getItem('sonova-ref');
-      if (ref && p) {
-        const { applyReferral, ensureReferralCode } = await import('../lib/featuresApi');
-        await applyReferral(userId, ref).catch(() => {});
-        sessionStorage.removeItem('sonova-ref');
-        await ensureReferralCode(userId, p.username).catch(() => {});
-      } else if (p) {
-        const { ensureReferralCode } = await import('../lib/featuresApi');
-        await ensureReferralCode(userId, p.username).catch(() => {});
+      if (p) {
+        void (async () => {
+          const ref = sessionStorage.getItem('sonova-ref');
+          try {
+            const { applyReferral, ensureReferralCode } = await import('../lib/featuresApi');
+            if (ref) {
+              await applyReferral(userId, ref).catch(() => {});
+              sessionStorage.removeItem('sonova-ref');
+            }
+            await ensureReferralCode(userId, p.username).catch(() => {});
+          } catch {
+            /* non-blocking */
+          }
+        })();
       }
     } catch {
       setProfile(null);
@@ -69,21 +74,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
+    let cancelled = false;
+
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      if (data.session?.user) loadProfile(data.session.user.id);
-      setLoading(false);
-    });
+      if (data.session?.user) {
+        await loadProfile(data.session.user.id);
+      }
+      if (!cancelled) setLoading(false);
+    })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) loadProfile(sess.user.id);
+      if (sess?.user) void loadProfile(sess.user.id);
       else setProfile(null);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, [loadProfile]);
 
   const signUp = useCallback(
