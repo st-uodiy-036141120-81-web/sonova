@@ -34,14 +34,15 @@ export default function OnboardingPage() {
     else if (!profile) setStep('profile');
   }, [profile, tagsComplete]);
 
-  if (!loading && tagsComplete) {
-    navigate('/');
-    return <AppLoadingScreen />;
-  }
+  useEffect(() => {
+    if (!loading && tagsComplete) navigate('/');
+  }, [loading, tagsComplete, navigate]);
 
-  if (!loading && !user) {
+  if (loading) return <AppLoadingScreen />;
+
+  if (!user) {
     navigate('/login');
-    return null;
+    return <AppLoadingScreen />;
   }
 
   const toggleTag = (tag: string) => {

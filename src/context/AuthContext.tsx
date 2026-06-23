@@ -41,8 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  const loadProfile = useCallback(async (userId: string) => {
-    setProfileLoading(true);
+  const loadProfile = useCallback(async (userId: string, options?: { silent?: boolean }) => {
+    if (!options?.silent) setProfileLoading(true);
     try {
       const p = await fetchProfile(userId);
       if (supabase) {
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Profile load failed', err);
       // Keep existing profile on transient errors — don't treat as missing profile
     } finally {
-      setProfileLoading(false);
+      if (!options?.silent) setProfileLoading(false);
     }
   }, []);
 
@@ -92,12 +92,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!cancelled) setLoading(false);
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
       setSession(sess);
       const nextUser = sess?.user ?? null;
       setUser(nextUser);
-      if (nextUser) void loadProfile(nextUser.id);
-      else setProfile(null);
+      if (nextUser) {
+        const shouldReload =
+          event === 'SIGNED_IN' ||
+          event === 'INITIAL_SESSION' ||
+          event === 'USER_UPDATED' ||
+          event === 'PASSWORD_RECOVERY';
+        if (shouldReload) void loadProfile(nextUser.id);
+      } else {
+        setProfile(null);
+      }
     });
 
     return () => {
@@ -179,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    if (user) await loadProfile(user.id);
+    if (user) await loadProfile(user.id, { silent: true });
   }, [user, loadProfile]);
 
   const emailVerified = Boolean(user?.email_confirmed_at ?? user?.confirmed_at);

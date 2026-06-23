@@ -53,7 +53,8 @@ function EmailVerificationGuard({ children }: { children: ReactNode }) {
 function OnboardingGuard({ children }: { children: ReactNode }) {
   const { user, loading, needsOnboarding, profileLoading } = useAuth();
   const { pathname } = useLocation();
-  if (loading || profileLoading) return <AppLoadingScreen />;
+  const skipProfileWait = ['/onboarding', '/login', '/register', '/verify-email'].includes(pathname);
+  if (loading || (profileLoading && !skipProfileWait)) return <AppLoadingScreen />;
   if (user && needsOnboarding && pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
