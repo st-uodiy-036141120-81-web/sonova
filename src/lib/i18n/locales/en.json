@@ -29,6 +29,7 @@
   "auth": {
     "loginTitle": "Log in",
     "registerTitle": "Create account",
+    "supabaseNotConfigured": "Backend not connected — clear site cache (Ctrl+Shift+R) or contact support.",
     "email": "Email",
     "password": "Password",
     "username": "Username (max 7 chars)",

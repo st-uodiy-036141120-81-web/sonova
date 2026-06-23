@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div className="liquid-glass w-full max-w-md rounded-2xl p-8" style={{ background: 'var(--glass-bg)' }}>
         <h1 className="text-2xl text-[var(--text-primary)]">{t('auth.loginTitle')}</h1>
 
-        {!configured && <p className="mt-4 rounded-lg bg-amber-500/20 px-3 py-2 text-xs text-amber-600">Supabase .env</p>}
+        {!configured && <p className="mt-4 rounded-lg bg-amber-500/20 px-3 py-2 text-xs text-amber-600">{t('auth.supabaseNotConfigured')}</p>}
 
         <div className="mt-6 space-y-4">
           <OAuthButtons />

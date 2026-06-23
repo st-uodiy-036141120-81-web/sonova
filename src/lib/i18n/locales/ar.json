@@ -29,6 +29,7 @@
   "auth": {
     "loginTitle": "تسجيل الدخول",
     "registerTitle": "إنشاء حساب",
+    "supabaseNotConfigured": "الخادم غير مربوط — امسح الكاش (Ctrl+Shift+R) أو حدّث الصفحة.",
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
     "username": "اسم المستخدم (7 أحرف كحد أقصى)",

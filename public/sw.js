@@ -1,6 +1,6 @@
-const SHELL = 'sonova-v2';
+const SHELL = 'sonova-v3';
 const AUDIO = 'sonova-audio-v1';
-const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
+const ASSETS = ['/manifest.webmanifest', '/favicon.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL).then((c) => c.addAll(ASSETS)));
@@ -15,6 +15,10 @@ self.addEventListener('activate', (e) => {
   );
   self.clients.claim();
 });
+
+function isAppShell(url) {
+  return url.endsWith('/') || url.includes('/index.html') || url.includes('/assets/');
+}
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
@@ -33,6 +37,21 @@ self.addEventListener('fetch', (e) => {
           return cached ?? Response.error();
         }
       })
+    );
+    return;
+  }
+
+  // HTML + JS: network first so env/config updates reach users after deploy
+  if (isAppShell(url)) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res.ok && url.includes('/index.html')) {
+            caches.open(SHELL).then((c) => c.put(e.request, res.clone()));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request).then((c) => c ?? caches.match('/index.html')))
     );
     return;
   }

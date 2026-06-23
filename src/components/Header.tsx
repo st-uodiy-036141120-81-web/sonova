@@ -99,7 +99,7 @@ export default function Header() {
 
       {!configured && (
         <div className="mt-3 mx-auto max-w-lg rounded-xl bg-amber-500/90 px-4 py-2 text-center text-xs text-white">
-          Supabase .env required
+          {t('auth.supabaseNotConfigured')}
         </div>
       )}
 

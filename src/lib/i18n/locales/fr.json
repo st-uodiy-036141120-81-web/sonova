@@ -29,6 +29,7 @@
   "auth": {
     "loginTitle": "Connexion",
     "registerTitle": "Créer un compte",
+    "supabaseNotConfigured": "Backend non connecté — videz le cache (Ctrl+Shift+R).",
     "email": "E-mail",
     "password": "Mot de passe",
     "username": "Nom d'utilisateur (max 7 car.)",
